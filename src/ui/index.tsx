@@ -41,18 +41,6 @@ class App extends React.Component<{ observer: Observer }> {
 
     render() {
         return <div id="application-container">
-            <Container id="panel-left" flex resizable='right' resizeMin={220} resizeMax={800}>
-                <div className="header" style={{ display: 'none' }}>
-                    <div id="title">
-                        <img src={'static/playcanvas-logo.png'}/>
-                        <div>{`MODEL VIEWER v${appVersion}`}</div>
-                    </div>
-                </div>
-                <div id="panel-toggle">
-                    <img src={'static/playcanvas-logo.png'}/>
-                </div>
-                <LeftPanel observerData={this.state} setProperty={this._setStateProperty} />
-            </Container>
             <div id='canvas-wrapper'>
                 <canvas id="application-canvas" ref={this.canvasRef} />
                 <LoadControls setProperty={this._setStateProperty}/>

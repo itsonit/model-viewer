@@ -387,6 +387,11 @@ class Viewer {
 
         this.app.scene.layers.getLayerByName('World').transparentSortMode = SORTMODE_BACK2FRONT;
 
+        //reset background color and rm skybox
+        this.setBackgroundColor(Color.BLACK);
+        this.app.scene.layers.getLayerById(LAYERID_SKYBOX).enabled = false;
+
+
         // start the application
         app.start();
     }
@@ -1533,7 +1538,7 @@ class Viewer {
     }
 
     clearCta() {
-        document.querySelector('#panel-left').classList.add('no-cta');
+        //document.querySelector('#panel-left').classList.add('no-cta');
         document.querySelector('#application-canvas').classList.add('no-cta');
         document.querySelector('.load-button-panel').classList.add('hide');
     }

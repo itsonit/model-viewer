@@ -55,15 +55,6 @@ const LoadControls = (props: { setProperty: SetProperty }) => {
     return (
         <div id='load-controls'>
             <Container class="load-button-panel" enabled flex>
-                <div className='header'>
-                    <img src={'static/playcanvas-logo.png'}/>
-                    <div>
-                        <Label text={`MODEL VIEWER v${appVersion}`} />
-                    </div>
-                    <Button onClick={() => {
-                        window.open('https://github.com/playcanvas/model-viewer', '_blank').focus();
-                    }} icon='E259'/>
-                </div>
                 <input type='file' id='file' accept='.glb,.gltf,.ply' multiple onChange={onFileSelected} ref={inputFile} style={{ display: 'none' }} />
                 <div id="drag-drop" onClick={onLoadButtonClick}>
                     <Button id="drag-drop-search-icon" icon='E129' />
