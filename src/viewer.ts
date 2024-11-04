@@ -228,13 +228,15 @@ class Viewer {
         //retrieve zoomMin, zoomMax from the url
         const url = new URL(window.location.href);
         let zoomMin = parseFloat(url.searchParams.get('zoomMin'));
-        console.log('zoomMin', zoomMin);
         zoomMin = isNaN(zoomMin) ? 0.001 : zoomMin;
         let zoomMax = parseFloat(url.searchParams.get('zoomMax'));
         zoomMax = isNaN(zoomMax) ? 10 : zoomMax;
+        let angleMax = parseFloat(url.searchParams.get('angleMax'));
+        angleMax = isNaN(angleMax) ? 90 : angleMax;
 
 
-        this.multiCamera = camera.script.create(MultiCamera, {attributes: {zoomMin: zoomMin, zoomMax: zoomMax}}) as MultiCamera;
+        this.multiCamera = camera.script.create(MultiCamera, {attributes: {zoomMin: zoomMin, zoomMax: zoomMax, angleMax: angleMax}}) as MultiCamera;
+
         camera.camera.requestSceneColorMap(true);
 
         app.keyboard.on(EVENT_KEYDOWN, (event) => {
