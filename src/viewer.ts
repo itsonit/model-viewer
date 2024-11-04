@@ -224,7 +224,17 @@ class Viewer {
             clearColor: new Color(0, 0, 0, 0)
         });
         camera.addComponent('script');
-        this.multiCamera = camera.script.create(MultiCamera);
+
+        //retrieve zoomMin, zoomMax from the url
+        const url = new URL(window.location.href);
+        let zoomMin = parseFloat(url.searchParams.get('zoomMin'));
+        console.log('zoomMin', zoomMin);
+        zoomMin = isNaN(zoomMin) ? 0.001 : zoomMin;
+        let zoomMax = parseFloat(url.searchParams.get('zoomMax'));
+        zoomMax = isNaN(zoomMax) ? 10 : zoomMax;
+
+
+        this.multiCamera = camera.script.create(MultiCamera, {attributes: {zoomMin: zoomMin, zoomMax: zoomMax}}) as MultiCamera;
         camera.camera.requestSceneColorMap(true);
 
         app.keyboard.on(EVENT_KEYDOWN, (event) => {
