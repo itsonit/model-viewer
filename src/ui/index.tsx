@@ -43,7 +43,6 @@ class App extends React.Component<{ observer: Observer }> {
         return <div id="application-container">
             <div id='canvas-wrapper'>
                 <canvas id="application-canvas" ref={this.canvasRef} />
-                <LoadControls setProperty={this._setStateProperty}/>
                 <SelectedNode sceneData={this.state.scene} />
                 <PopupPanel observerData={this.state} setProperty={this._setStateProperty} />
                 <ErrorBox observerData={this.state} />
