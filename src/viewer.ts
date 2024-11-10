@@ -83,7 +83,7 @@ const defaultSceneBounds = new BoundingBox(new Vec3(0, 1, 0), new Vec3(1, 1, 1))
 const vec = new Vec3();
 const bbox = new BoundingBox();
 
-const FOCUS_FOV = 75;
+const FOCUS_FOV = 35;
 
 class Viewer {
     canvas: HTMLCanvasElement;
@@ -219,7 +219,7 @@ class Viewer {
         // create the camera
         const camera = new Entity('Camera');
         camera.addComponent('camera', {
-            fov: 75,
+            fov: 35,
             frustumCulling: true,
             clearColor: new Color(0, 0, 0, 0)
         });
@@ -1325,7 +1325,7 @@ class Viewer {
     }
 
     setDebugStats(show: boolean) {
-        this.miniStats.enabled = show;
+        this.miniStats.enabled = false;
         this.renderNextFrame();
     }
 
@@ -1360,8 +1360,8 @@ class Viewer {
     }
 
     setDebugGrid(show: boolean) {
-        this.showGrid = show;
-        this.dirtyGrid = true;
+        this.showGrid = false;
+        this.dirtyGrid = false;
         this.renderNextFrame();
     }
 
@@ -1372,7 +1372,7 @@ class Viewer {
     }
 
     setFov(fov: number) {
-        this.camera.camera.fov = fov;
+        this.camera.camera.fov = 35;
         this.renderNextFrame();
     }
 
@@ -1483,7 +1483,7 @@ class Viewer {
             ACES2: TONEMAP_ACES2
         };
 
-        this.app.scene.rendering.toneMapping = mapping.hasOwnProperty(tonemapping) ? mapping[tonemapping] : TONEMAP_ACES;
+        this.app.scene.rendering.toneMapping = TONEMAP_ACES;
         this.renderNextFrame();
     }
 
@@ -1554,7 +1554,7 @@ class Viewer {
     clearCta() {
         //document.querySelector('#panel-left').classList.add('no-cta');
         document.querySelector('#application-canvas').classList.add('no-cta');
-        document.querySelector('.load-button-panel').classList.add('hide');
+        //document.querySelector('.load-button-panel').classList.add('hide');
     }
 
     // add a loaded asset to the scene
