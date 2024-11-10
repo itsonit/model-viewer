@@ -296,44 +296,52 @@ const main = () => {
             });
         }
 
-        // handle search params
-        for (const [key, value] of url.searchParams) {
-            switch (key) {
-                case 'load':
-                case 'assetUrl': {
-                    const url = decodeURIComponent(value);
-                    files.push({ url, filename: url });
-                    break;
+        if('playerconfig' in window) {
+            if ((window as any).playerconfig.files) {
+                for (const file of (window as any).playerconfig.files) {
+                    files.push({ url: file, filename: file });
                 }
-                case 'cameraPosition': {
-                    const pos = value.split(',').map(Number);
-                    if (pos.length === 3) {
-                        viewer.initialCameraPosition = new Vec3(pos);
+            }
+        } else {
+            // handle search params
+            for (const [key, value] of url.searchParams) {
+                switch (key) {
+                    case 'load':
+                    case 'assetUrl': {
+                        const url = decodeURIComponent(value);
+                        files.push({ url, filename: url });
+                        break;
                     }
-                    break;
-                }
-                case 'cameraFocus': {
-                    const pos = value.split(',').map(Number);
-                    if (pos.length === 3) {
-                        viewer.initialCameraFocus = new Vec3(pos);
-                    }
-                    break;
-                }
-                default: {
-                    if (observer.has(key)) {
-                        switch (typeof observer.get(key)) {
-                            case 'boolean':
-                                observer.set(key, value.toLowerCase() === 'true');
-                                break;
-                            case 'number':
-                                observer.set(key, Number(value));
-                                break;
-                            default:
-                                observer.set(key, decodeURIComponent(value));
-                                break;
+                    case 'cameraPosition': {
+                        const pos = value.split(',').map(Number);
+                        if (pos.length === 3) {
+                            viewer.initialCameraPosition = new Vec3(pos);
                         }
+                        break;
                     }
-                    break;
+                    case 'cameraFocus': {
+                        const pos = value.split(',').map(Number);
+                        if (pos.length === 3) {
+                            viewer.initialCameraFocus = new Vec3(pos);
+                        }
+                        break;
+                    }
+                    default: {
+                        if (observer.has(key)) {
+                            switch (typeof observer.get(key)) {
+                                case 'boolean':
+                                    observer.set(key, value.toLowerCase() === 'true');
+                                    break;
+                                case 'number':
+                                    observer.set(key, Number(value));
+                                    break;
+                                default:
+                                    observer.set(key, decodeURIComponent(value));
+                                    break;
+                            }
+                        }
+                        break;
+                    }
                 }
             }
         }
