@@ -59,7 +59,14 @@ class PngExporter {
     constructor() {
         let receiver: (message: MessageEvent) => void = null;
 
-        const workerBlob = new Blob([`(${PngExporter.WORKER_STR})('${window.location.href.split('?')[0]}')\n\n`], {
+        var bases = document.getElementsByTagName('base');
+        var baseHref = window.location.href.split('?')[0];
+        
+        if (bases.length > 0) {
+            baseHref = bases[0].href;
+        }
+
+        const workerBlob = new Blob([`(${PngExporter.WORKER_STR})('${baseHref}')\n\n`], {
             type: 'application/javascript'
         });
         this.worker = new Worker(URL.createObjectURL(workerBlob));
