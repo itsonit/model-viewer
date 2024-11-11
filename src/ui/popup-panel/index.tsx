@@ -51,7 +51,22 @@ class PopupButtonControls extends React.Component <{ observerData: ObserverData,
 }
 
 const toggleCollapsed = () => {
-    document.getElementById('panel-left').classList.toggle('collapsed');
+    var elem = document.documentElement;
+
+    /* View in fullscreen */
+    function openFullscreen() {
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if ((elem as any).webkitRequestFullscreen) { /* Safari */
+            (elem as any).webkitRequestFullscreen();
+        } else if ((elem as any).msRequestFullscreen) { /* IE11 */
+            (elem as any).msRequestFullscreen();
+        }
+    }
+
+    openFullscreen();
+
+    document.getElementById('fullscreen-button').style.display = 'none';
 };
 
 class PopupPanel extends React.Component <{ observerData: ObserverData, setProperty: SetProperty }> {
