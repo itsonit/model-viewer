@@ -44,14 +44,7 @@ const TARGETS = [
                 .replace('__');
         }
     },
-    {
-        src: 'src/index.php',
-        transform: (contents) => {
-            return contents.toString()
-                .replace('__BASE_HREF__', process.env.BASE_HREF || '')
-                .replace('__');
-        }
-    },
+    { src: 'src/index.php' },
     { src: 'src/.htaccess' },
     { src: 'src/manifest.json' },
     { src: 'src/fonts.css' },
