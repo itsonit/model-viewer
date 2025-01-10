@@ -2,6 +2,8 @@ import {
     BLENDEQUATION_ADD,
     BLENDMODE_CONSTANT,
     BLENDMODE_ONE_MINUS_CONSTANT,
+    EVENT_POSTRENDER,
+    EVENT_PRERENDER,
     FILTER_NEAREST,
     PIXELFORMAT_RGBA8,
     PIXELFORMAT_RGBA16F,
@@ -67,20 +69,35 @@ const noBlend = new BlendState(false);
 // generate multiframe, supersampled AA
 class Multiframe {
     device: WebglGraphicsDevice;
+
     camera: CameraComponent;
+
     textureBias: number;
+
     shader: Shader = null;
+
     pixelFormat: number;
+
     texcoordModUniform: ScopeId = null;
+
     multiframeTexUniform: ScopeId = null;
+
     powerUniform: ScopeId = null;
+
     textureBiasUniform: ScopeId = null;
+
     accumTexture: Texture = null;
+
     accumRenderTarget: RenderTarget = null;
+
     sampleArray: Vec3[] = [];
+
     sampleId = 0;
+
     sampleAccum = 0;
+
     enabled = true;
+
     blend = 1.0;
 
     constructor(device: WebglGraphicsDevice, camera: CameraComponent, samples?: Vec3[]) {
@@ -90,7 +107,11 @@ class Multiframe {
 
         // just before rendering the scene we apply a subpixel jitter
         // to the camera's projection matrix.
-        this.camera.onPreRender = () => {
+        this.camera.system.app.scene.on(EVENT_PRERENDER, (c: CameraComponent) => {
+            if (c !== this.camera) {
+                return;
+            }
+
             const camera = this.camera.camera;
             const pmat = camera.projectionMatrix;
 
@@ -107,13 +128,16 @@ class Multiframe {
 
             // look away
             camera._viewProjMatDirty = true;
-        };
+        });
 
-        this.camera.onPostRender = () => {
+        this.camera.system.app.scene.on(EVENT_POSTRENDER, (c: CameraComponent) => {
+            if (c !== this.camera) {
+                return;
+            }
             const pmat = camera.projectionMatrix;
             pmat.data[8] = 0;
             pmat.data[9] = 0;
-        };
+        });
 
         this.shader = createShaderFromCode(device, vshader, fshader, 'multiframe', {
             vertex_position: SEMANTIC_POSITION

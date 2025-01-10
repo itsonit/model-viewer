@@ -24,7 +24,9 @@ import {
     SORTMODE_BACK2FRONT,
     TEXTURETYPE_DEFAULT,
     TEXTURETYPE_RGBM,
+    TONEMAP_NONE,
     TONEMAP_LINEAR,
+    TONEMAP_NEUTRAL,
     TONEMAP_FILMIC,
     TONEMAP_HEJL,
     TONEMAP_ACES,
@@ -58,10 +60,11 @@ import {
     TouchDevice,
     Vec3,
     Vec4,
-    WebglGraphicsDevice
+    WebglGraphicsDevice,
+    Vec2
 } from 'playcanvas';
 // @ts-ignore
-import { MultiCamera } from 'playcanvas/scripts/camera/multi-camera.js';
+import { CameraControls } from 'playcanvas/scripts/esm/camera-controls.mjs';
 
 import { App } from './app';
 import { DebugLines } from './debug-lines';
@@ -87,66 +90,114 @@ const FOCUS_FOV = 75;
 
 class Viewer {
     canvas: HTMLCanvasElement;
+
     app: App;
+
     skyboxUrls: Map<string, string>;
+
     controlEventKeys: string[] = null;
+
     pngExporter: PngExporter = null;
+
     prevCameraMat: Mat4;
+
     camera: Entity;
+
     initialCameraPosition: Vec3 | null;
+
     initialCameraFocus: Vec3 | null;
+
     light: Entity;
+
     sceneRoot: Entity;
+
     debugRoot: Entity;
+
     entities: Array<Entity>;
+
     entityAssets: Array<{ entity: Entity; asset: Asset }>;
+
     assets: Array<Asset>;
+
     meshInstances: Array<MeshInstance>;
+
     wireframeMeshInstances: Array<MeshInstance>;
+
     wireframeMaterial: StandardMaterial;
+
     animTracks: Array<AnimTrack>;
+
     animationMap: Record<string, string>;
+
     firstFrame: boolean;
+
     skyboxLoaded: boolean;
+
     animSpeed: number;
+
     animTransition: number;
+
     animLoops: number;
+
     showWireframe: boolean;
+
     showBounds: boolean;
+
     showSkeleton: boolean;
+
     showAxes: boolean;
+
     showGrid: boolean;
+
     normalLength: number;
+
     dirtyWireframe: boolean;
+
     dirtyBounds: boolean;
+
     dirtySkeleton: boolean;
+
     dirtyGrid: boolean;
+
     dirtyNormals: boolean;
+
     sceneBounds: BoundingBox;
+
     dynamicSceneBounds: BoundingBox;
+
     debugBounds: DebugLines;
+
     debugSkeleton: DebugLines;
+
     debugGrid: DebugLines;
+
     debugNormals: DebugLines;
+
     miniStats: MiniStats;
+
     observer: Observer;
+
     suppressAnimationProgressUpdate: boolean;
 
     selectedNode: GraphNode | null;
 
     multiframe: Multiframe | null;
+
     multiframeBusy = false;
+
     readDepth: ReadDepth = null;
+
     cursorWorld = new Vec3();
 
     loadTimestamp?: number = null;
 
     shadowCatcher: ShadowCatcher = null;
+
     xrMode: XRObjectPlacementController;
 
     canvasResize = true;
 
-    multiCamera: MultiCamera;
+    cameraControls: CameraControls;
 
     constructor(
         canvas: HTMLCanvasElement,
@@ -218,6 +269,8 @@ class Viewer {
 
         // create the camera
         const camera = new Entity('Camera');
+        camera.setPosition(0, 1, 10);
+        this.app.root.addChild(camera);
         camera.addComponent('camera', {
             fov: 75,
             frustumCulling: true,
@@ -234,8 +287,14 @@ class Viewer {
         let angleMax = parseFloat(url.searchParams.get('angleMax'));
         angleMax = isNaN(angleMax) ? 90 : angleMax;
 
-
-        this.multiCamera = camera.script.create(MultiCamera, {attributes: {zoomMin: zoomMin, zoomMax: zoomMax, angleMax: angleMax}}) as MultiCamera;
+        this.cameraControls = camera.script.create(CameraControls, {
+            attributes: {
+                zoomMin: zoomMin,
+                zoomMax: zoomMax,
+                pitchRange: new Vec2(-90, 90),
+                angleMax: angleMax
+            }
+        });
 
         camera.camera.requestSceneColorMap(true);
 
@@ -243,7 +302,7 @@ class Viewer {
             switch (event.key) {
                 case KEY_F: {
                     this.focusSelection(false);
-                    this.multiCamera.resetZoom(this.getZoomDist());
+                    this.cameraControls.resetZoom(this.getZoomDist());
                     break;
                 }
             }
@@ -387,7 +446,7 @@ class Viewer {
                     this.camera.getWorldTransform().transformPoint(this.cursorWorld, this.cursorWorld); // world space
 
                     // focus on cursor
-                    this.multiCamera.focus(this.cursorWorld);
+                    this.cameraControls.focus(this.cursorWorld);
                 }
             });
         });
@@ -436,7 +495,7 @@ class Viewer {
             this.multiframe.blend = 0.5;
 
             // detach multi camera
-            this.multiCamera.detach();
+            this.cameraControls.detach();
         });
 
         events.on('xr:initial-place', () => {
@@ -451,7 +510,7 @@ class Viewer {
             this.setBackgroundColor(this.observer.get('skybox.backgroundColor'));
 
             // attach multicamera
-            this.multiCamera.attach(this.camera);
+            this.cameraControls.attach(this.camera);
 
             this.multiframe.blend = 1.0;
         });
@@ -748,13 +807,13 @@ class Viewer {
         const d2 = Math.tan(0.5 * camera.fov * math.DEG_TO_RAD);
 
         const scale = (d1 / d2) * (1 / camera.aspectRatio);
-        return scale * this.multiCamera.sceneSize + this.multiCamera.sceneSize;
+        return scale * this.cameraControls.sceneSize + this.cameraControls.sceneSize;
     }
 
     private focusSelection(calcStart = true) {
         // calculate scene bounding box
         this.calcSceneBounds(bbox, this.selectedNode as Entity);
-        this.multiCamera.sceneSize = bbox.halfExtents.length();
+        this.cameraControls.sceneSize = bbox.halfExtents.length();
 
         // calculate the camera focus point
         const focus = this.getFocusPosition(bbox);
@@ -769,11 +828,15 @@ class Viewer {
                 start.copy(focus);
                 start.z += this.getZoomDist();
             }
+
+            // set initial camera position
+            this.camera.setPosition(start);
+
+            // refit camera clip planes
+            this.fitCameraClipPlanes();
         }
 
-        // focus orbit camera on object and set focus and sceneSize
-        this.multiCamera.sceneSize = bbox.halfExtents.length();
-        this.multiCamera.focus(focus, start);
+        this.cameraControls.focus(focus, start);
     }
 
     destroyRenderTargets() {
@@ -1079,18 +1142,18 @@ class Viewer {
             };
 
             const containerAsset = new Asset(gltfUrl.filename, 'container', gltfUrl, null, {
-                    // @ts-ignore TODO no definition in pc
-                    bufferView: {
-                        processAsync: processBufferView.bind(this)
-                    },
-                    image: {
-                        processAsync: processImage.bind(this),
-                        postprocess: postProcessImage
-                    },
-                    buffer: {
-                        processAsync: processBuffer.bind(this)
-                    }
+                // @ts-ignore TODO no definition in pc
+                bufferView: {
+                    processAsync: processBufferView.bind(this)
+                },
+                image: {
+                    processAsync: processImage.bind(this),
+                    postprocess: postProcessImage
+                },
+                buffer: {
+                    processAsync: processBuffer.bind(this)
                 }
+            }
             );
             containerAsset.on('load', () => resolve(containerAsset));
             containerAsset.on('error', (err: string) => reject(err));
@@ -1158,37 +1221,37 @@ class Viewer {
             });
 
             Promise.all(promises)
-                .then((assets: Asset[]) => {
-                    this.loadTimestamp = loadTimestamp;
+            .then((assets: Asset[]) => {
+                this.loadTimestamp = loadTimestamp;
 
-                    // add assets to the scene
-                    assets.forEach((asset) => {
-                        if (asset) {
-                            this.addToScene(asset);
-                        }
-                    });
-
-                    // prepare scene post load
-                    this.postSceneLoad();
-
-                    // update scene urls
-                    const urls = files.map(f => f.url);
-                    const filenames = files.map(f => f.filename.split('/').pop());
-                    if (resetScene) {
-                        this.observer.set('scene.urls', urls);
-                        this.observer.set('scene.filenames', filenames);
-                    } else {
-                        this.observer.set('scene.urls', this.observer.get('scene.urls').concat(urls));
-                        this.observer.set('scene.filenames', this.observer.get('scene.filenames').concat(filenames));
+                // add assets to the scene
+                assets.forEach((asset) => {
+                    if (asset) {
+                        this.addToScene(asset);
                     }
-                })
-                .catch((err) => {
-                    console.log(err);
-                    this.observer.set('ui.error', err?.toString() || err);
-                })
-                .finally(() => {
-                    this.observer.set('ui.spinner', false);
                 });
+
+                // prepare scene post load
+                this.postSceneLoad();
+
+                // update scene urls
+                const urls = files.map(f => f.url);
+                const filenames = files.map(f => f.filename.split('/').pop());
+                if (resetScene) {
+                    this.observer.set('scene.urls', urls);
+                    this.observer.set('scene.filenames', filenames);
+                } else {
+                    this.observer.set('scene.urls', this.observer.get('scene.urls').concat(urls));
+                    this.observer.set('scene.filenames', this.observer.get('scene.filenames').concat(filenames));
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                this.observer.set('ui.error', err?.toString() || err);
+            })
+            .finally(() => {
+                this.observer.set('ui.spinner', false);
+            });
         } else {
             // load skybox
             this.loadSkybox(files);
@@ -1476,14 +1539,16 @@ class Viewer {
 
     setTonemapping(tonemapping: string) {
         const mapping: Record<string, number> = {
+            None: TONEMAP_NONE,
             Linear: TONEMAP_LINEAR,
+            Neutral: TONEMAP_NEUTRAL,
             Filmic: TONEMAP_FILMIC,
             Hejl: TONEMAP_HEJL,
             ACES: TONEMAP_ACES,
             ACES2: TONEMAP_ACES2
         };
 
-        this.app.scene.rendering.toneMapping = mapping.hasOwnProperty(tonemapping) ? mapping[tonemapping] : TONEMAP_ACES;
+        this.camera.camera.toneMapping = mapping.hasOwnProperty(tonemapping) ? mapping[tonemapping] : TONEMAP_ACES;
         this.renderNextFrame();
     }
 
@@ -1497,7 +1562,7 @@ class Viewer {
     update(deltaTime: number) {
         // update the orbit camera
         if (!this.xrMode?.active) {
-            this.multiCamera.update(deltaTime);
+            this.cameraControls.update(deltaTime);
         }
 
         const maxdiff = (a: Mat4, b: Mat4) => {
@@ -1606,10 +1671,10 @@ class Viewer {
     private postSceneLoad() {
         // construct a list of meshInstances so we can quickly access them when configuring wireframe rendering etc.
         this.meshInstances = this.entities
-            .map((entity) => {
-                return this.collectMeshInstances(entity);
-            })
-            .flat();
+        .map((entity) => {
+            return this.collectMeshInstances(entity);
+        })
+        .flat();
 
         // if no meshes are currently loaded, then enable skeleton rendering so user can see something
         if (this.meshInstances.length === 0) {
@@ -1692,7 +1757,7 @@ class Viewer {
         // set projective skybox radius
         this.setSkyboxDomeRadius(this.observer.get('skybox.domeProjection.domeRadius'));
 
-        // set camera clipping planes
+        // focus the camera on the scene
         this.focusSelection();
     }
 
