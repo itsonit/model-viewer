@@ -9,7 +9,7 @@ $playerconfig = [
         ]
     ],
     'hund1' => [
-        'zoomMin' => 1.5,
+        'zoomMin' => 1.8,
         'zoomMax' => 4,
         'angleMax' => 0,
         'files' => [
@@ -91,6 +91,7 @@ if (!array_key_exists($asset, $playerconfig)) {
 </head>
 
 <body>
+    <a id='ar-link' rel='ar' download='asset.usdz'><img /></a>
     <div id='app'></div>
     <script src="index.js"></script>
 </body>
