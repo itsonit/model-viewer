@@ -117,7 +117,7 @@ class Viewer {
 
     entityAssets: Array<{ entity: Entity; asset: Asset }>;
 
-    assets: Array<Asset>;
+    assets: Array<Asset>;          
 
     meshInstances: Array<MeshInstance>;
 
@@ -278,15 +278,32 @@ class Viewer {
         });
         camera.addComponent('script');
 
-        //retrieve zoomMin, zoomMax from the url
-        const url = new URL(window.location.href);
-        let zoomMin = parseFloat(url.searchParams.get('zoomMin'));
-        zoomMin = isNaN(zoomMin) ? 0.001 : zoomMin;
-        let zoomMax = parseFloat(url.searchParams.get('zoomMax'));
-        zoomMax = isNaN(zoomMax) ? 10 : zoomMax;
-        let angleMax = parseFloat(url.searchParams.get('angleMax'));
-        angleMax = isNaN(angleMax) ? 90 : angleMax;
-
+        let zoomMin, zoomMax, angleMax, r, g, b, backgroundColor;
+        //retrieve zoomMin, zoomMax from the url or from window object
+        if('playerconfig' in window) {
+            zoomMin = parseFloat((window as any).playerconfig.zoomMin);
+            zoomMin = isNaN(zoomMin) ? 0.001 : zoomMin;
+            zoomMax = parseFloat((window as any).playerconfig.zoomMax);
+            zoomMax = isNaN(zoomMax) ? 10 : zoomMax;
+            angleMax = parseFloat((window as any).playerconfig.angleMax);
+            angleMax = isNaN(angleMax) ? 90 : angleMax;
+            r = parseFloat((window as any).playerconfig.r);
+            g = parseFloat((window as any).playerconfig.g);
+            b = parseFloat((window as any).playerconfig.b);
+            backgroundColor = (isNaN(r) || isNaN(g) || isNaN(b)) ? new Color(0, 0, 0) : new Color(r, g, b);
+        } else {
+            const url = new URL(window.location.href);
+            zoomMin = parseFloat(url.searchParams.get('zoomMin'));
+            zoomMin = isNaN(zoomMin) ? 0.001 : zoomMin;
+            zoomMax = parseFloat(url.searchParams.get('zoomMax'));
+            zoomMax = isNaN(zoomMax) ? 10 : zoomMax;
+            angleMax = parseFloat(url.searchParams.get('angleMax'));
+            angleMax = isNaN(angleMax) ? 90 : angleMax;
+            r = parseFloat(url.searchParams.get('r'));
+            g = parseFloat(url.searchParams.get('g'));
+            b = parseFloat(url.searchParams.get('b'));
+            backgroundColor = (isNaN(r) || isNaN(g) || isNaN(b)) ? new Color(0, 0, 0) : new Color(r, g, b);
+        }
         this.cameraControls = camera.script.create(CameraControls, {
             attributes: {
                 zoomMin: zoomMin,
@@ -453,8 +470,8 @@ class Viewer {
 
         this.app.scene.layers.getLayerByName('World').transparentSortMode = SORTMODE_BACK2FRONT;
 
-        //reset background color and rm skybox
-        this.setBackgroundColor(Color.BLACK);
+        //set custom background color and rm skybox
+        this.setBackgroundColor(backgroundColor);
         this.app.scene.layers.getLayerById(LAYERID_SKYBOX).enabled = false;
 
 
