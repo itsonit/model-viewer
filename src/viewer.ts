@@ -658,7 +658,7 @@ class Viewer {
             'debug.bounds': this.setDebugBounds.bind(this),
             'debug.skeleton': this.setDebugSkeleton.bind(this),
             'debug.axes': this.setDebugAxes.bind(this),
-            'debug.grid': this.setDebugGrid.bind(this),
+            //'debug.grid': this.setDebugGrid.bind(this),
             'debug.normals': this.setNormalLength.bind(this),
             'debug.renderMode': this.setRenderMode.bind(this),
 

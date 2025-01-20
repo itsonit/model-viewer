@@ -341,6 +341,16 @@ const main = () => {
             }
         }
 
+        // load file from window object
+        if('playerconfig' in window) {
+            if((window as any).playerconfig.files.length > 0) {
+                for (const file of (window as any).playerconfig.files) {
+                    const url = decodeURIComponent(file);
+                    files.push({ url, filename: url });
+                }
+            }
+        }
+
         Promise.all(promises).then(() => {
             if (files.length > 0) {
                 viewer.loadFiles(files);

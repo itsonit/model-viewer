@@ -49,10 +49,6 @@ class PopupButtonControls extends React.Component <{ observerData: ObserverData,
         return (
             <div id='popup-buttons-parent'>
                 <AnimationControls animationData={this.props.observerData.animation} setProperty={this.props.setProperty} />
-                <Button class={buildClass('camera')} icon='E212' width={40} height={40} onClick={() => handleClick('camera')} />
-                <Button class={buildClass('skybox')} icon='E200' width={40} height={40} onClick={() => handleClick('skybox')} />
-                <Button class={buildClass('light')} icon='E194' width={40} height={40} onClick={() => handleClick('light')} />
-                <Button class={buildClass('debug')} icon='E134' width={40} height={40} onClick={() => handleClick('debug')} />
                 <Button class={buildClass('view')} icon='E301' width={40} height={40} onClick={() => handleClick('view')} />
             </div>
         );
