@@ -304,11 +304,12 @@ class Viewer {
             b = parseFloat(url.searchParams.get('b'));
             backgroundColor = (isNaN(r) || isNaN(g) || isNaN(b)) ? new Color(0, 0, 0) : new Color(r, g, b);
         }
+
         this.cameraControls = camera.script.create(CameraControls, {
             attributes: {
                 zoomMin: zoomMin,
                 zoomMax: zoomMax,
-                pitchRange: new Vec2(-90, 90),
+                pitchRange: new Vec2(-90, angleMax),
                 angleMax: angleMax
             }
         });
@@ -416,7 +417,7 @@ class Viewer {
 
         // construct ministats, default off
         this.miniStats = new MiniStats(app);
-        this.miniStats.enabled = observer.get('debug.stats');
+        this.miniStats.enabled = false; //observer.get('debug.stats');
 
         this.observer = observer;
 
